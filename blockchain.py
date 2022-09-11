@@ -4,7 +4,7 @@ import json
 from urllib.parse import urlparse
 import requests
 
-from block.block import Block
+from block.block import Block, block_hash
 
 class Blockchain:
   def __init__(self):
@@ -20,15 +20,6 @@ class Blockchain:
                   proof,
                   previous_hash,
                   self.mempool)
-    """
-    block = {
-      "index": len(self.chain) + 1,
-      "timestamp": str(datetime.datetime.now()),
-      "proof": proof,
-      "previous_hash": previous_hash,
-      "transactions": self.mempool
-    }
-    """
     self.mempool = []
     self.chain.append(block)
 
@@ -57,26 +48,14 @@ class Blockchain:
 
     return new_proof
 
-  def hash(self, block):
-    # encoded_block = json.dumps(block, sort_keys=True).encode()
-    encoded_block = block.to_string().encode()
-    return hashlib.sha256(encoded_block).hexdigest()
-
   def is_chain_valid(self, chain):
     previous_block = chain[0]
     block_index = 1
 
     while (block_index < self.length()):
       block = self.chain[block_index]
-      if (block.previous_hash != self.hash(previous_block)):
-        return False
 
-      previous_proof = previous_block.proof
-      proof = block.proof
-
-      hash_operation = hashlib.sha256(str(proof ** 2 - previous_proof ** 2).encode()).hexdigest()
-
-      if (hash_operation[:4] != "0000"):
+      if not(self.is_block_valid(block, previous_block)):
         return False
 
       previous_block = block
@@ -84,9 +63,26 @@ class Blockchain:
 
     return True
 
+  def is_block_valid(self, block, previous_block):
+    if (block.previous_hash != block_hash(previous_block)):
+      return False
+
+    previous_proof = previous_block.proof
+    proof = block.proof
+
+    hash_operation = hashlib.sha256(str(proof ** 2 - previous_proof ** 2).encode()).hexdigest()
+
+    if (hash_operation[:4] != "0000"):
+      return False
+
+    return True
+
   def add_transaction(self, tx):
     self.mempool.append(tx)
     return self.previous_block().index + 1
+
+  def add_block(self, block):
+    pass
 
   def add_nodes(self, node_urls):
     self.nodes = self.nodes.union(node_urls)
