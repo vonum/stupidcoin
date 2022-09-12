@@ -1,7 +1,8 @@
-from typing import List
-from fastapi import FastAPI, Body
+from typing import List, Dict
+from fastapi import FastAPI, Body, Request
 from uuid import uuid4
 from block.node import Node
+from block.block import block_from_payload
 
 app = FastAPI()
 app.node = Node()
@@ -25,7 +26,25 @@ async def latest_block():
 
 @app.get("/mine_block")
 async def mine_block():
-  return app.node.mine_block()
+  block = app.node.mine_block()
+  app.node.forward_block(block)
+  return block
+
+@app.post("/add_block")
+async def add_block(index: int = Body(...),
+                    timestamp: str = Body(...),
+                    proof: int = Body(...),
+                    previous_hash: str = Body(...),
+                    transactions: List[Dict] = Body(...)):
+  block = block_from_payload({
+    "index": index,
+    "timestamp": timestamp,
+    "proof": proof,
+    "previous_hash": previous_hash,
+    "transactions": transactions
+  })
+  if (app.node.add_block(block)):
+    app.node.forward_block(block)
 
 @app.post("/add_transaction")
 async def add_transaction(sender: str = Body(...),
@@ -33,7 +52,7 @@ async def add_transaction(sender: str = Body(...),
                           value: int = Body(...),
                           signature: str = Body(...),
                           public_key: str = Body(...)):
-  app.node.add_transaction(sender, receiver, value,
+  tx = app.node.add_transaction(sender, receiver, value,
                            signature, public_key)
 @app.post("/add_nodes")
 async def add_nodes(node_urls: List = Body(..., embed=True)):

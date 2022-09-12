@@ -79,10 +79,17 @@ class Blockchain:
 
   def add_transaction(self, tx):
     self.mempool.append(tx)
-    return self.previous_block().index + 1
+    return tx
 
   def add_block(self, block):
-    pass
+    if self._contains_block(block):
+      return False
+
+    if self.is_block_valid(block, self.previous_block()):
+      self.chain.append(block)
+      return True
+    else:
+      return False
 
   def add_nodes(self, node_urls):
     self.nodes = self.nodes.union(node_urls)
@@ -102,3 +109,10 @@ class Blockchain:
         max_length = length
 
     self.chain = longest_chain
+
+  def _contains_block(self, block):
+    for b in self.chain:
+      if b.blockhash == block.blockhash:
+        return True
+
+    return False

@@ -2,6 +2,7 @@ import requests
 
 from blockchain import Blockchain
 from block.transaction import Transaction
+from block.block import Block
 from block.wallet import Wallet
 
 class Node:
@@ -49,7 +50,7 @@ class Node:
 
   def mine_block(self):
     previous_block = self.blockchain.previous_block()
-    previous_hash = self.blockchain.hash(previous_block)
+    previous_hash = previous_block.blockhash
 
     coinbase_tx = Transaction(self.wallet.public_key(), "milan", 1)
     self.blockchain.add_transaction(coinbase_tx)
@@ -58,6 +59,20 @@ class Node:
     block = self.blockchain.create_block(proof, previous_hash)
 
     return block
+
+  def add_block(self, block):
+    return self.blockchain.add_block(block)
+
+  def forward_block(self, block):
+    payload = block.to_payload()
+    print(payload)
+    for node in self.nodes:
+      print(node)
+      try:
+        requests.post(f"{node}/add_block", json=payload)
+      except:
+        print(f"Failed to forward block to {node}")
+
 
   def add_transaction(self, sender, receiver,
                       value, signature, public_key):
@@ -77,16 +92,15 @@ class Node:
     else:
       raise "Invalid signature"
 
-  def _forward_block(self, block):
-    for node in self.nodes:
-      try:
-        pass
-      except:
-        print(f"Failed to forward block to {node}")
-
   def _forward_tx(self, tx, signature, public_key):
+    payload = {"sender":     tx.sender,
+               "receiver":   tx.receiver,
+               "value":      tx.value,
+               "signature":  signature,
+               "public_key": public_key}
+
     for node in self.nodes:
       try:
-        self.wallet.forward_transaction(tx, signature, public_key, node)
+        requests.post(f"{node}/add_transaction", json=payload)
       except:
         print(f"Failed to forward tx to {node}")

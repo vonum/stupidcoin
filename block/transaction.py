@@ -14,4 +14,3 @@ class Transaction:
   def to_string(self):
     tx_dict = {"sender": self.sender, "receiver": self.receiver, "value": self.value}
     return str(tx_dict)
-
