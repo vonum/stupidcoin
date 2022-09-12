@@ -16,13 +16,13 @@ class Node:
     return self.nodes
 
   def chain_length(self):
-    return self.blockchain.length()
+    return len(self.blockchain.chain)
 
   def chain(self):
     return self.blockchain.chain
 
   def mempool_length(self):
-    return self.blockchain.mempool_length()
+    return len(self.blockchain.mempool)
 
   def mempool(self):
     return self.blockchain.mempool
@@ -65,14 +65,11 @@ class Node:
 
   def forward_block(self, block):
     payload = block.to_payload()
-    print(payload)
     for node in self.nodes:
-      print(node)
       try:
         requests.post(f"{node}/add_block", json=payload)
       except:
         print(f"Failed to forward block to {node}")
-
 
   def add_transaction(self, sender, receiver,
                       value, signature, public_key):

@@ -10,7 +10,6 @@ class Blockchain:
   def __init__(self):
     self.chain = []
     self.mempool = []
-    self.nodes = set()
 
     self.create_block(1, "0")
 
@@ -24,12 +23,6 @@ class Blockchain:
     self.chain.append(block)
 
     return block
-
-  def length(self):
-    return len(self.chain)
-
-  def mempool_length(self):
-    return len(self.mempool)
 
   def previous_block(self):
     return self.chain[-1]
@@ -87,13 +80,10 @@ class Blockchain:
 
     if self.is_block_valid(block, self.previous_block()):
       self.chain.append(block)
+      self._remove_txs_from_mempool(block.transactions)
       return True
     else:
       return False
-
-  def add_nodes(self, node_urls):
-    self.nodes = self.nodes.union(node_urls)
-    return self.nodes
 
   def sync_chain(self):
     longest_chain = self.chain
@@ -116,3 +106,6 @@ class Blockchain:
         return True
 
     return False
+
+  def _remove_txs_from_mempool(self, txs):
+    self.mempool = list(set(self.mempool) - set(txs))
