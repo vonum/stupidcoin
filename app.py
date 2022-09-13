@@ -2,15 +2,17 @@ from typing import List, Dict
 from fastapi import FastAPI, Body, Request
 from uuid import uuid4
 
-from block.constants import KEYS_DIRECTORY
-from block.node import Node
-from block.wallet import Wallet
-from block.block import block_from_payload
+from stupidcoin.constants import KEYS_DIRECTORY
+from stupidcoin.node import Node
+from stupidcoin.wallet import Wallet
+from stupidcoin.block import block_from_payload
 
 import os
 
 initial_addresses = []
 for filename in os.listdir(KEYS_DIRECTORY):
+    if filename == ".keep":
+      continue
     filepath = os.path.join(KEYS_DIRECTORY, filename)
 
     with open(filepath, "r") as f:
