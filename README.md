@@ -1,5 +1,4 @@
-# simple-blockchain
-
+# stupidcoin
 Very simple and stupid simulation of a blockchain.
 There are no background processes, so everything needs to be triggered manually
 (minning).

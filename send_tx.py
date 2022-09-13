@@ -1,8 +1,8 @@
 import argparse
 
-from block.wallet import Wallet
-from block.constants import KEYS_DIRECTORY
-from block.transaction import Transaction
+from stupidcoin.wallet import Wallet
+from stupidcoin.constants import KEYS_DIRECTORY
+from stupidcoin.transaction import Transaction
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--sender", "-s", type=int, help="[0, 9]")
