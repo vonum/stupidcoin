@@ -1,10 +1,10 @@
 import requests
 
-from blockchain import Blockchain
-from block.transaction import Transaction
-from block.block import Block
-from block.wallet import Wallet
-from block.constants import BLOCK_REWARD
+from .blockchain import Blockchain
+from .transaction import Transaction
+from .block import Block
+from .wallet import Wallet
+from .constants import BLOCK_REWARD
 
 class Node:
   def __init__(self, initial_addresses):

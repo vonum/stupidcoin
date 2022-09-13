@@ -3,8 +3,8 @@ import datetime
 import hashlib
 import requests
 
-from block.block import Block, block_hash
-from block.constants import BLOCK_REWARD
+from .block import Block, block_hash
+from .constants import BLOCK_REWARD
 
 class Blockchain:
   def __init__(self, initial_addresses):
@@ -108,14 +108,10 @@ class Blockchain:
     if (hash_operation[:4] != "0000"):
       return False
 
-    for tx in block.transactions[:-1]:
-      if not(self._is_transaction_valid(tx)):
-        return False
-    if not(self._is_transaction_valid(block.transactions[-1])):
+    if not(self._are_block_transactions_valid(block.transactions)):
       return False
 
     return True
-
 
   def _contains_block(self, block):
     for b in self.chain:
@@ -126,6 +122,15 @@ class Blockchain:
 
   def _remove_txs_from_mempool(self, txs):
     self.mempool = list(set(self.mempool) - set(txs))
+
+  def _are_block_transactions_valid(self, txs):
+    for tx in txs[:-1]:
+      if not(self._is_transaction_valid(tx)):
+        return False
+    if not(self._is_transaction_valid(txs[-1], coinbase=True)):
+      return False
+
+    return True
 
   def _is_transaction_valid(self, tx, coinbase=False):
     if coinbase:
@@ -144,7 +149,6 @@ class Blockchain:
     self._execute_transaction(txs[-1], coinbase=True)
 
   def _execute_transaction(self, tx, coinbase=False):
-    print(tx)
     if not(coinbase):
       self.balances[tx.sender] -= tx.value
     self.balances[tx.receiver] = self.balances.get(tx.receiver, 0) + tx.value
