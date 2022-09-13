@@ -52,7 +52,7 @@ class Blockchain:
     previous_block = chain[0]
     block_index = 1
 
-    while (block_index < self.length()):
+    while (block_index < len(self.chain)):
       block = self.chain[block_index]
 
       if not(self._is_block_valid(block, previous_block)):
