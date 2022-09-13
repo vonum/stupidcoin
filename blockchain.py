@@ -1,25 +1,32 @@
+import json
 import datetime
 import hashlib
-import json
-from urllib.parse import urlparse
 import requests
 
 from block.block import Block, block_hash
+from block.constants import BLOCK_REWARD
 
 class Blockchain:
-  def __init__(self):
+  def __init__(self, initial_addresses):
+    self.balances = {}
+    for a in initial_addresses:
+      self.balances[a] = 1000
+
     self.chain = []
     self.mempool = []
 
-    self.create_block(1, "0")
+    self.create_block(1, "0", first=True)
 
-  def create_block(self, proof, previous_hash):
+  def create_block(self, proof, previous_hash, first=False):
     block = Block(len(self.chain) + 1,
                   str(datetime.datetime.now()),
                   proof,
                   previous_hash,
                   self.mempool)
     self.mempool = []
+
+    if not(first):
+      self._execute_block_transactions(block.transactions)
     self.chain.append(block)
 
     return block
@@ -48,7 +55,7 @@ class Blockchain:
     while (block_index < self.length()):
       block = self.chain[block_index]
 
-      if not(self.is_block_valid(block, previous_block)):
+      if not(self._is_block_valid(block, previous_block)):
         return False
 
       previous_block = block
@@ -56,29 +63,18 @@ class Blockchain:
 
     return True
 
-  def is_block_valid(self, block, previous_block):
-    if (block.previous_hash != block_hash(previous_block)):
-      return False
+  def add_transaction(self, tx, coinbase=False):
+    if self._is_transaction_valid(tx, coinbase=coinbase):
+      self.mempool.append(tx)
 
-    previous_proof = previous_block.proof
-    proof = block.proof
-
-    hash_operation = hashlib.sha256(str(proof ** 2 - previous_proof ** 2).encode()).hexdigest()
-
-    if (hash_operation[:4] != "0000"):
-      return False
-
-    return True
-
-  def add_transaction(self, tx):
-    self.mempool.append(tx)
     return tx
 
   def add_block(self, block):
     if self._contains_block(block):
       return False
 
-    if self.is_block_valid(block, self.previous_block()):
+    if self._is_block_valid(block, self.previous_block()):
+      self._execute_block_transactions(block.transactions)
       self.chain.append(block)
       self._remove_txs_from_mempool(block.transactions)
       return True
@@ -100,6 +96,27 @@ class Blockchain:
 
     self.chain = longest_chain
 
+  def _is_block_valid(self, block, previous_block):
+    if (block.previous_hash != block_hash(previous_block)):
+      return False
+
+    previous_proof = previous_block.proof
+    proof = block.proof
+
+    hash_operation = hashlib.sha256(str(proof ** 2 - previous_proof ** 2).encode()).hexdigest()
+
+    if (hash_operation[:4] != "0000"):
+      return False
+
+    for tx in block.transactions[:-1]:
+      if not(self._is_transaction_valid(tx)):
+        return False
+    if not(self._is_transaction_valid(block.transactions[-1])):
+      return False
+
+    return True
+
+
   def _contains_block(self, block):
     for b in self.chain:
       if b.blockhash == block.blockhash:
@@ -109,3 +126,25 @@ class Blockchain:
 
   def _remove_txs_from_mempool(self, txs):
     self.mempool = list(set(self.mempool) - set(txs))
+
+  def _is_transaction_valid(self, tx, coinbase=False):
+    if coinbase:
+      if tx.value != BLOCK_REWARD:
+        raise "Bad block reward"
+    else:
+      if self.balances[tx.sender] < tx.value:
+        raise "Not enough coins"
+
+    return True
+
+  def _execute_block_transactions(self, txs):
+    for tx in txs[:-1]:
+      self._execute_transaction(tx)
+
+    self._execute_transaction(txs[-1], coinbase=True)
+
+  def _execute_transaction(self, tx, coinbase=False):
+    print(tx)
+    if not(coinbase):
+      self.balances[tx.sender] -= tx.value
+    self.balances[tx.receiver] = self.balances.get(tx.receiver, 0) + tx.value

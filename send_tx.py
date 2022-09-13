@@ -29,26 +29,5 @@ tx = Transaction(sender_wallet.public_key(),
                  receiver_wallet.public_key(),
                  value)
 
-r = sender_wallet.send_transaction(receiver_wallet.public_key(), 500)
-print(r)
-"""
-message = tx.to_string()
-signature = sender_wallet.sign(message)
-
-print("Message: ", message)
-print("Signature:", signature)
-print("Public key:", sender_wallet.public_key())
-
-status = Wallet.verify(message, signature, sender_wallet.public_key())
-print(status)
-
-data = {"sender": sender_wallet.public_key(),
-        "receiver": receiver_wallet.public_key(),
-        "value": value,
-        "signature": signature,
-        "public_key": sender_wallet.public_key()}
-
-print(url)
-r = requests.post(f"{url}/add_transaction", json=data)
-print(r)
-"""
+r = sender_wallet.send_transaction(receiver_wallet.public_key(), value)
+print(f"Sent {value} from {sender_wallet.public_key()} to {receiver_wallet.public_key()}")

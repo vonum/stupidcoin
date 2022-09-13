@@ -1,11 +1,26 @@
 from typing import List, Dict
 from fastapi import FastAPI, Body, Request
 from uuid import uuid4
+
+from block.constants import KEYS_DIRECTORY
 from block.node import Node
+from block.wallet import Wallet
 from block.block import block_from_payload
 
+import os
+
+initial_addresses = []
+for filename in os.listdir(KEYS_DIRECTORY):
+    filepath = os.path.join(KEYS_DIRECTORY, filename)
+
+    with open(filepath, "r") as f:
+      pkey = f.read()
+      wallet = Wallet.import_hex(pkey, None)
+      initial_addresses.append(wallet.public_key())
+print(initial_addresses)
+
 app = FastAPI()
-app.node = Node()
+app.node = Node(initial_addresses)
 
 @app.get("/chain")
 async def chain():
@@ -14,6 +29,10 @@ async def chain():
 @app.get("/mempool")
 async def mempool():
   return {"length": app.node.mempool_length(), "mempool": app.node.mempool()}
+
+@app.get("/balances")
+async def chain():
+  return app.node.blockchain.balances
 
 @app.get("/is_valid")
 async def is_valid():

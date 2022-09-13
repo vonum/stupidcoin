@@ -4,10 +4,11 @@ from blockchain import Blockchain
 from block.transaction import Transaction
 from block.block import Block
 from block.wallet import Wallet
+from block.constants import BLOCK_REWARD
 
 class Node:
-  def __init__(self):
-    self.blockchain = Blockchain()
+  def __init__(self, initial_addresses):
+    self.blockchain = Blockchain(initial_addresses)
     self.wallet = Wallet.generate(None)
     self.nodes = set()
 
@@ -52,8 +53,8 @@ class Node:
     previous_block = self.blockchain.previous_block()
     previous_hash = previous_block.blockhash
 
-    coinbase_tx = Transaction(self.wallet.public_key(), "milan", 1)
-    self.blockchain.add_transaction(coinbase_tx)
+    coinbase_tx = Transaction(self.wallet.public_key(), "milan", BLOCK_REWARD)
+    self.blockchain.add_transaction(coinbase_tx, coinbase=True)
 
     proof = self.blockchain.proof_of_work(previous_block.proof)
     block = self.blockchain.create_block(proof, previous_hash)
